@@ -1,82 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './StyleInterno.css';
 
 const Questionario = () => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
-    const [responses, setResponses] = useState([]);
 
     useEffect(() => {
-        axios.get(`http://localhost:3001/questionario/perguntas}`)
+        axios.get(`http://localhost:3001/questionario/perguntas`)
             .then(response => {
-                const questionsWithResponses = response.data.map(q => ({
-                    ...q,
-                    answer: q.resposta || null
-                }));
-                setQuestions(questionsWithResponses);
+                setQuestions(response.data);
             })
             .catch(error => {
-                console.error('Erro ao carregar perguntas e respostas:', error);
+                console.error('Erro ao carregar perguntas:', error);
             });
-    });
+    }, []);
 
-    
-    const handleOptionChange = (event) => {
-        setSelectedOption(event.target.value);
+    const handleOptionSelect = (option) => {
+        setSelectedOption(option);
     };
 
-    
     const handleNextClick = () => {
         if (selectedOption !== null) {
-            const updatedResponses = [...responses];
-            updatedResponses[currentQuestionIndex] = selectedOption;
-            setResponses(updatedResponses);
+            // Save response (could add an API call here)
 
+            // Move to next question or submit
             if (currentQuestionIndex < questions.length - 1) {
                 setCurrentQuestionIndex(currentQuestionIndex + 1);
-                setSelectedOption(questions[currentQuestionIndex + 1].answer || null);
+                setSelectedOption(null);
             } else {
-                axios.post('http://localhost:3001/questionario/respostas', {
-                   
-                    respostas: updatedResponses.map((answer, index) => ({
-                        questionId: questions[index].pergunta_id,
-                        answer
-                    }))
-                })
-                .then(() => {
-                    console.log('Respostas enviadas com sucesso');
-                })
-                .catch(error => {
-                    console.error('Erro ao enviar respostas:', error);
-                });
+                console.log('End of questions');
+                // Implement submission logic here
             }
         }
     };
 
     return (
-        <div>
-            {questions.length === 0 ? (
-                <p>Carregando perguntas...</p>
-            ) : (
-                <>
-                    <h2>{questions[currentQuestionIndex].pergunta}</h2>
-                    <div>
-                        {['Sim', 'Não'].map((option, index) => (
-                            <label key={index}>
-                                <input
-                                    type="radio"
-                                    value={option}
-                                    checked={selectedOption === option}
-                                    onChange={handleOptionChange}
-                                />
-                                {option}
-                            </label>
-                        ))}
-                    </div>
-                    <button onClick={handleNextClick}>Próxima</button>
-                </>
-            )}
+        <div className="screen-container">
+            <div className="question-box">
+                {questions.length > 0 && (
+                    <>
+                        <h2 className="question-text">{questions[currentQuestionIndex].pergunta}</h2>
+                        <div className="options-container">
+                            {['Sim', 'Não'].map((option, index) => (
+                                <div
+                                    key={index}
+                                    className={`option-button ${selectedOption === option ? 'selected' : ''}`}
+                                    onClick={() => handleOptionSelect(option)}
+                                >
+                                    {option}
+                                </div>
+                            ))}
+                        </div>
+                        <button className="next-button" onClick={handleNextClick}>Prosseguir</button>
+                    </>
+                )}
+            </div>
+            <div className="back-button">⟵ Voltar</div>
         </div>
     );
 };
